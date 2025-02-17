@@ -1,0 +1,5 @@
+beautifulsoup4>=4.13
+numpy>=2.2.3
+python-dotenv>=1.0.0
+scipy>=1.15
+selenium>=4.28
