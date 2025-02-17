@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 from scipy.ndimage import binary_dilation
 from enum import Enum
+import time
 
 
 class SquareState(Enum):
@@ -31,10 +32,11 @@ class QueensSolver:
             self.append_queen(queen_position[0], queen_position[1])
 
         # iterate until all queens are found
-        for i in range(20):
+        while True:
             temp_board = self.queens.copy()
             self.simple_possibilities_eliminator()
 
+            # if the board is equal to the previous one deeper search
             if np.array_equal(temp_board, self.queens):
                 self.semi_greedy_eliminator()
 
@@ -162,11 +164,3 @@ class QueensSolver:
     def __str__(self):
         return str(self.queens)
 
-
-if __name__ == '__main__':
-    colors = np.load('hard_colors.npy')
-    queens = np.load('hard_queens.npy')
-
-    solver = QueensSolver(colors, queens)
-    solver.solve()
-    print(solver)

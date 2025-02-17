@@ -28,7 +28,7 @@ class OnlineConnectorQueens:
 
         # click to close popup
         wait = WebDriverWait(self.driver, 10)
-        button = wait.until(ec.element_to_be_clickable((By.ID, "ember58")))
+        button = wait.until(ec.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__dismiss")))
         button.click()
 
         # take the dom
