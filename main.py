@@ -12,6 +12,8 @@ if __name__ == "__main__":
 
     colors = connector.get_colors()
     queens = connector.get_queens()
+    connector.save_queens('harder_queens')
+    connector.save_colors('harder_colors')
 
     solver = QueensSolver(colors, queens)
     solver.solve()

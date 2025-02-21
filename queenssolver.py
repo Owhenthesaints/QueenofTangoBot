@@ -13,6 +13,8 @@ class SquareState(Enum):
 
 
 class QueensSolver:
+    MAX_NUM_ITER = 100
+
     def __init__(self, colors: np.ndarray, queens: np.ndarray):
         self.colors = colors
         self.queens = queens
@@ -32,7 +34,7 @@ class QueensSolver:
             self.append_queen(queen_position[0], queen_position[1])
 
         # iterate until all queens are found
-        while True:
+        for _ in range(QueensSolver.MAX_NUM_ITER):
             temp_board = self.queens.copy()
             self.simple_possibilities_eliminator()
 
@@ -93,8 +95,8 @@ class QueensSolver:
 
                 active_rows = np.any(color_activation, axis=1)
                 if np.sum(np.any(color_activation, axis=1)) == n:
-                    zone_to_eliminate = np.ones(self.queens.shape, dtype=bool)
-                    zone_to_eliminate[active_rows, :] = False
+                    zone_to_eliminate = np.zeros(self.queens.shape, dtype=bool)
+                    zone_to_eliminate[active_rows, :] = True
                     zone_to_eliminate = zone_to_eliminate & (~color_activation) & (
                             self.queens == SquareState.Free.value)
                     self.queens[zone_to_eliminate] = SquareState.Occupied.value
@@ -163,4 +165,3 @@ class QueensSolver:
 
     def __str__(self):
         return str(self.queens)
-
