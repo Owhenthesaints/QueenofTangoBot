@@ -28,3 +28,13 @@ class LinkedinGameConnector(ABC):
         button = wait.until(ec.element_to_be_clickable((By.CLASS_NAME, "artdeco-modal__dismiss")))
         button.click()
 
+    @abstractmethod
+    def extract_board(self):
+        """
+        Extract the board from the game
+        :return:
+        """
+        pass
+
+    def __del__(self):
+        self.driver.quit()
