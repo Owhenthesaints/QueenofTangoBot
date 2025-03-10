@@ -25,21 +25,22 @@ class TangoBoardStates(Enum):
 
 class TangoConnector(LinkedinGameConnector):
     BOARD_SHAPE = (6, 6)
-    RELATIONS_SHAPE = (5, 5)
+    RELATIONS_SHAPE_HORIZONTAL = (6, 5)
+    RELATIONS_SHAPE_VERTICAL = (5, 6)
 
     def __init__(self, path_to_driver, full_screen=True):
         super().__init__(path_to_driver, "https://linkedin.com/games/tango", full_screen=full_screen)
         self.tango_board = None
         self.clickable_squares = []
-        self.horizontal_equals = np.zeros(self.RELATIONS_SHAPE).astype(np.int8)
-        self.vertical_equals = np.zeros(self.RELATIONS_SHAPE).astype(np.int8)
+        self.horizontal_equals = np.zeros(self.RELATIONS_SHAPE_HORIZONTAL).astype(np.int8)
+        self.vertical_equals = np.zeros(self.RELATIONS_SHAPE_VERTICAL).astype(np.int8)
         self.extract_board()
 
     def extract_board(self):
         # extract the shape
         board_elements = self.driver.find_element(By.CLASS_NAME, "lotka-grid")
         # fully empty board means full 0s
-        board_elements_soupified = BeautifulSoup(board_elements.get_attribute("outerHTML"), 'html.parser')
+        board_elements_soupified = BeautifulSoup(board_elements.get_attribute("innerHTML"), 'html.parser')
         self.tango_board = np.zeros(self.BOARD_SHAPE, dtype=int)
         self.populate_moons_sun(board_elements_soupified)
         self.populate_relations(board_elements_soupified)
@@ -66,26 +67,34 @@ class TangoConnector(LinkedinGameConnector):
             for edge_relation in edge_relations:
                 # get the class
                 classes = edge_relation.get("class")
+                # extract right or left
                 match = re.search(r'\b(right|down)\b', classes[1])
                 if match is not None:
-                    if match == "right":
+                    if match.group() == "right":
                         relation_table = self.horizontal_equals
                     else:
                         relation_table = self.vertical_equals
 
-                    if edge_relation.get("aria-label") == "Cross":
-                        # assign a new category if it is in a free category
-                        relation_table[int(np.floor(index / self.RELATIONS_SHAPE[1])) + 1][
-                            index % self.RELATIONS_SHAPE[0] + 1] = EqualityStates.NotEqual.value
-
-                    elif edge_relation.get("aria-label") == "Equal":
-                        relation_table[int(np.floor(index / self.RELATIONS_SHAPE[1])) + 1][
-                            index % self.RELATIONS_SHAPE[0] + 1] = EqualityStates.Equal.value
+                    edge_relation_type = edge_relation.find('svg').get('aria-label')
+                    if edge_relation_type == "Cross" or edge_relation_type == "Equal":
+                        relation_table[int(np.floor(index / self.BOARD_SHAPE[1]))][index % self.BOARD_SHAPE[
+                            0]] = EqualityStates.Equal.value if edge_relation_type == "Equal" else EqualityStates.NotEqual.value
 
     def __del__(self):
+        self.quit()
+
+    def __str__(self):
+        return str(self.tango_board)
+
+    def quit(self):
         self.driver.quit()
 
 
 if __name__ == "__main__":
     dotenv.load_dotenv()
     tango_connector = TangoConnector(os.getenv('PATH_TO_GECKODRIVER'), full_screen=True)
+    print(tango_connector)
+    print(tango_connector.horizontal_equals)
+    print(tango_connector.vertical_equals)
+    while True:
+        pass
