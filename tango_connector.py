@@ -7,6 +7,7 @@ from enum import Enum
 import numpy as np
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+from selenium.webdriver.remote.webelement import WebElement
 
 from linkedin_connector import LinkedinGameConnector
 
@@ -30,7 +31,7 @@ class TangoConnector(LinkedinGameConnector):
 
     def __init__(self, path_to_driver, full_screen=True):
         super().__init__(path_to_driver, "https://linkedin.com/games/tango", full_screen=full_screen)
-        self.tango_board = None
+        self.tango_board = np.zeros(self.BOARD_SHAPE, dtype=np.uint8)
         self.clickable_squares = []
         self.horizontal_equals = np.zeros(self.RELATIONS_SHAPE_HORIZONTAL).astype(np.int8)
         self.vertical_equals = np.zeros(self.RELATIONS_SHAPE_VERTICAL).astype(np.int8)
@@ -41,9 +42,9 @@ class TangoConnector(LinkedinGameConnector):
         board_elements = self.driver.find_element(By.CLASS_NAME, "lotka-grid")
         # fully empty board means full 0s
         board_elements_soupified = BeautifulSoup(board_elements.get_attribute("innerHTML"), 'html.parser')
-        self.tango_board = np.zeros(self.BOARD_SHAPE, dtype=int)
         self.populate_moons_sun(board_elements_soupified)
         self.populate_relations(board_elements_soupified)
+        self.populate_clickers(board_elements)
 
     def populate_moons_sun(self, board_elements_soupified: BeautifulSoup):
         # iterate through grid cells
@@ -80,6 +81,25 @@ class TangoConnector(LinkedinGameConnector):
                         relation_table[int(np.floor(index / self.BOARD_SHAPE[1]))][index % self.BOARD_SHAPE[
                             0]] = EqualityStates.Equal.value if edge_relation_type == "Equal" else EqualityStates.NotEqual.value
 
+    def populate_clickers(self, board_elements: WebElement):
+        for index, cell in enumerate(board_elements.find_elements(By.XPATH, './*')):
+            self.clickable_squares.append(cell)
+
+    def save_board(self, str_name: str = 'tango_board'):
+        np.save(str_name + '.npy', self.tango_board)
+
+    def save_horizontal_relations(self, str_name: str = 'horizontal_relations'):
+        np.save(str_name + '.npy', self.horizontal_equals)
+
+    def save_vertical_relations(self, str_name: str = 'vertical_relations'):
+        np.save(str_name + '.npy', self.vertical_equals)
+
+    def get_horizontal_relations(self):
+        return self.horizontal_equals
+
+    def get_vertical_relations(self):
+        return self.vertical_equals
+
     def __del__(self):
         self.quit()
 
@@ -94,7 +114,5 @@ if __name__ == "__main__":
     dotenv.load_dotenv()
     tango_connector = TangoConnector(os.getenv('PATH_TO_GECKODRIVER'), full_screen=True)
     print(tango_connector)
-    print(tango_connector.horizontal_equals)
-    print(tango_connector.vertical_equals)
-    while True:
-        pass
+    print(tango_connector.get_horizontal_relations())
+    print(tango_connector.get_vertical_relations())
