@@ -29,13 +29,17 @@ class TangoConnector(LinkedinGameConnector):
     RELATIONS_SHAPE_HORIZONTAL = (6, 5)
     RELATIONS_SHAPE_VERTICAL = (5, 6)
 
-    def __init__(self, path_to_driver, full_screen=True):
+    def __init__(self, path_to_driver, full_screen=True, save_file='tango_test_files'):
         super().__init__(path_to_driver, "https://linkedin.com/games/tango", full_screen=full_screen)
         self.tango_board = np.zeros(self.BOARD_SHAPE, dtype=np.uint8)
         self.clickable_squares = []
         self.horizontal_equals = np.zeros(self.RELATIONS_SHAPE_HORIZONTAL).astype(np.int8)
         self.vertical_equals = np.zeros(self.RELATIONS_SHAPE_VERTICAL).astype(np.int8)
         self.extract_board()
+        self.boards_folder = save_file
+
+    def change_board_folder(self, new_folder: str):
+        self.boards_folder = new_folder
 
     def extract_board(self):
         # extract the shape
@@ -85,14 +89,32 @@ class TangoConnector(LinkedinGameConnector):
         for index, cell in enumerate(board_elements.find_elements(By.XPATH, './*')):
             self.clickable_squares.append(cell)
 
-    def save_board(self, str_name: str = 'tango_board'):
-        np.save(str_name + '.npy', self.tango_board)
+    def save_boards(self, tango_name="tango_board", vertical_name="vertical_board", horizontal_name="horizontal_board",
+                    use_folder=True):
+        if not os.path.exists(self.boards_folder):
+            os.makedirs(self.boards_folder)
 
-    def save_horizontal_relations(self, str_name: str = 'horizontal_relations'):
-        np.save(str_name + '.npy', self.horizontal_equals)
+        if use_folder:
+            tango_name = os.path.join(self.boards_folder, tango_name)
+            vertical_name = os.path.join(self.boards_folder, vertical_name)
+            horizontal_name = os.path.join(self.boards_folder, horizontal_name)
+        else:
+            tango_name = tango_name
+            vertical_name = vertical_name
+            horizontal_name = horizontal_name
 
-    def save_vertical_relations(self, str_name: str = 'vertical_relations'):
-        np.save(str_name + '.npy', self.vertical_equals)
+        self._save_board(tango_name + '.npy')
+        self._save_horizontal_relations(horizontal_name + '.npy')
+        self._save_vertical_relations(vertical_name + '.npy')
+
+    def _save_board(self, file_name: str):
+        np.save(file_name, self.tango_board)
+
+    def _save_horizontal_relations(self, file_name: str):
+        np.save(file_name, self.horizontal_equals)
+
+    def _save_vertical_relations(self, file_name: str):
+        np.save(file_name, self.vertical_equals)
 
     def get_horizontal_relations(self):
         return self.horizontal_equals
@@ -116,3 +138,4 @@ if __name__ == "__main__":
     print(tango_connector)
     print(tango_connector.get_horizontal_relations())
     print(tango_connector.get_vertical_relations())
+    tango_connector.save_boards("hard_tango_board", "hard_vertical_board", "hard_horizontal_board")
