@@ -21,7 +21,7 @@ class EqualityStates(Enum):
 class TangoBoardStates(Enum):
     Empty = 0
     Sun = 1
-    Moon = 2
+    Moon = -1
 
 
 class TangoConnector(LinkedinGameConnector):
