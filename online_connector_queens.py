@@ -50,9 +50,9 @@ class OnlineConnectorQueens(LinkedinGameConnector):
         # iterate through all the squares and get the color
         index = 0
         for square in board_element.children:
-            # if string node ignore
-            if isinstance(square, str):
-                continue
+            # if string node ignore or if hidden cell
+            if isinstance(square, str) or square.get('class')[0] == 'visually-hidden':
+                    continue
             # look for color
             color_string = square.get('class')[1]
             self.colors[int(np.floor(index / shape[1]))][index % shape[0]] = int(

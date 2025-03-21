@@ -85,23 +85,29 @@ class TangoSolver:
 
             temp_zone_arr = self._working_tango_board[zone_of_interest]
             # if the zone of interest is not empty or not full
-            if not (np.all(temp_zone_arr == TangoBoardStates.Empty.value) or np.all(
-                    (temp_zone_arr == TangoBoardStates.Moon.value) |
-                    (temp_zone_arr == TangoBoardStates.Sun.value))):
+            if not np.all(temp_zone_arr == TangoBoardStates.Empty.value):
+                if not np.all((temp_zone_arr == TangoBoardStates.Moon.value) |
+                              (temp_zone_arr == TangoBoardStates.Sun.value)):
 
-                # temporary zone to fill the spot with the equal slice
+                    # temporary zone to fill the spot with the equal slice
 
-                # replace the empty spot with the other value or with the opposite of value
-                if equal:
-                    temp_zone_arr[temp_zone_arr == TangoBoardStates.Empty.value] = temp_zone_arr[
-                        temp_zone_arr != TangoBoardStates.Empty.value][0]
-                else:
-                    temp_zone_arr[temp_zone_arr == TangoBoardStates.Empty.value] = - temp_zone_arr[
-                        temp_zone_arr != TangoBoardStates.Empty.value][0]
+                    # replace the empty spot with the other value or with the opposite of value
+                    if equal:
+                        temp_zone_arr[temp_zone_arr == TangoBoardStates.Empty.value] = temp_zone_arr[
+                            temp_zone_arr != TangoBoardStates.Empty.value][0]
+                    else:
+                        temp_zone_arr[temp_zone_arr == TangoBoardStates.Empty.value] = - temp_zone_arr[
+                            temp_zone_arr != TangoBoardStates.Empty.value][0]
 
-                self._working_tango_board[zone_of_interest] = temp_zone_arr
+                    # apply the changes
+                    self._working_tango_board[zone_of_interest] = temp_zone_arr
 
-        def _tango_changed(self, working_board:bool):
+                    # get rid of the equality state
+                    working_board[index] = EqualityStates.Free.value
+                # no working value
+                working_board[index] = EqualityStates.Free.value
+
+        def _tango_changed(self, working_board: bool):
             if working_board:
                 return not np.array_equal(self._working_tango_board, self.__apply_relations_following_board)
             else:
@@ -112,7 +118,7 @@ if __name__ == "__main__":
     tango_board = np.zeros(TANGO_BOARD_SHAPE)
     tango_board[0] = TangoBoardStates.Moon.value
 
-    equality_states_vertical = np.ones(VERTICAL_SHAPE)
+    equality_states_vertical = np.zeros(VERTICAL_SHAPE)
     equality_states_horizontal = np.ones(HORIZONTAL_SHAPE)
     tango_solver = TangoSolver(tango_board, equality_states_vertical, equality_states_horizontal)
     tango_solver._apply_relations(False)
