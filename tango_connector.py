@@ -31,7 +31,7 @@ class TangoConnector(LinkedinGameConnector):
 
     def __init__(self, path_to_driver, full_screen=True, save_file='tango_test_files'):
         super().__init__(path_to_driver, "https://linkedin.com/games/tango", full_screen=full_screen)
-        self.tango_board = np.zeros(self.BOARD_SHAPE, dtype=np.uint8)
+        self.tango_board = np.zeros(self.BOARD_SHAPE, dtype=np.int8)
         self.clickable_squares = []
         self.horizontal_equals = np.zeros(self.RELATIONS_SHAPE_HORIZONTAL).astype(np.int8)
         self.vertical_equals = np.zeros(self.RELATIONS_SHAPE_VERTICAL).astype(np.int8)
@@ -52,16 +52,24 @@ class TangoConnector(LinkedinGameConnector):
 
     def populate_moons_sun(self, board_elements_soupified: BeautifulSoup):
         # iterate through grid cells
-        for index, cell in enumerate(board_elements_soupified.find_all(recursive=False)):
+        index = 0
+        for cell in board_elements_soupified.find_all(recursive=False):
             # append sun or Moon
             content = cell.find(class_="lotka-cell-content-img")
-            if content is not None:
+            if content is not None and content.name != 'span':
                 if content.get("aria-label") == "Sun":
-                    self.tango_board[int(np.floor(index / self.BOARD_SHAPE[1]))][
-                        index % self.BOARD_SHAPE[0]] = TangoBoardStates.Sun.value
+                    try:
+                        self.tango_board[int(np.floor(index / self.BOARD_SHAPE[1]))][
+                            index % self.BOARD_SHAPE[0]] = TangoBoardStates.Sun.value
+                    except IndexError:
+                        print(f"Index {index} is out of bounds")
+                        raise IndexError
                 elif content.get("aria-label") == "Moon":
                     self.tango_board[int(np.floor(index / self.BOARD_SHAPE[1]))][
                         index % self.BOARD_SHAPE[0]] = TangoBoardStates.Moon.value
+
+                index += 1
+
 
     def populate_relations(self, board_elements_soupified: BeautifulSoup):
         for index, cell in enumerate(board_elements_soupified.find_all(recursive=False)):
@@ -138,4 +146,4 @@ if __name__ == "__main__":
     print(tango_connector)
     print(tango_connector.get_horizontal_relations())
     print(tango_connector.get_vertical_relations())
-    tango_connector.save_boards("hard_tango_board", "hard_vertical_board", "hard_horizontal_board")
+    tango_connector.save_boards("perfect_example", "perfect_example_vertical", "perfect_example_horizontal")
