@@ -29,32 +29,64 @@ class TangoSolver:
         self.__apply_relations_discarding_rels = False
 
     def solve(self):
+        self._apply_all_relations()
         self.solve_row_col(False)
         self.solve_row_col(True)
 
+
+    def _apply_all_relations(self):
+        self._apply_relations(True)
+        self._apply_relations(False)
+
     def solve_row_col(self, row: bool):
-        working_board = self.tango_board.copy()
+        working_board = self._working_tango_board
         working_relations = self.horizontal_relations.copy() if not row else self.vertical_relations.copy()
         if row:
             working_board = working_board.T
 
         self.easy_row_completion(working_board, working_relations)
 
+
     @staticmethod
     def easy_row_completion(working_board, working_relations):
 
         for row_index, row in enumerate(working_board):
-            num_moons = np.sum(row == TangoBoardStates.Moon.value)
-            num_suns = np.sum(row == TangoBoardStates.Sun.value)
+            row = TangoSolver.apply_fill_row_col(row)
+            row = TangoSolver.apply_stop_triple_row_col(row)
 
-            if num_moons >= MAX_TYPE_PLINE or num_suns >= MAX_TYPE_PLINE:
-                raise ValueError("Too many moons or suns in a row")
 
-            # if there are three moons
-            if num_moons == MAX_TYPE_PLINE and num_suns == MAX_TYPE_PLINE:
-                continue
-            elif num_suns == MAX_TYPE_PLINE or num_moons == MAX_TYPE_PLINE:
-                row[row != TangoBoardStates.Moon.value] = TangoBoardStates.Sun.value
+
+    @staticmethod
+    def apply_fill_row_col(row):
+        num_moons = np.sum(row == TangoBoardStates.Moon.value)
+        num_suns = np.sum(row == TangoBoardStates.Sun.value)
+
+        if num_moons >= MAX_TYPE_PLINE or num_suns >= MAX_TYPE_PLINE:
+            raise ValueError("Too many moons or suns in a row")
+
+        # if there are three moons
+        if num_moons == MAX_TYPE_PLINE and num_suns == MAX_TYPE_PLINE:
+            return row
+        elif num_suns == MAX_TYPE_PLINE or num_moons == MAX_TYPE_PLINE:
+            row[row != TangoBoardStates.Moon.value] = TangoBoardStates.Sun.value
+
+        return row
+
+    @staticmethod
+    def apply_stop_triple_row_col(row):
+        """
+        If there are two symbols in a row the third is automatically the opposite
+        :param row:
+        :return:
+        """
+        consecutive_equal = row[1:] == row[:-1]
+        for index in np.where(consecutive_equal):
+            if row[index+2] == TangoBoardStates.Empty.value:
+                row[index+2] = -row[index]
+            if row[index-1] == TangoBoardStates.Empty.value:
+                row[index-1] = -row[index]
+
+
 
     def _apply_relations(self, vertical: bool):
         """
@@ -115,11 +147,10 @@ class TangoSolver:
 
 
 if __name__ == "__main__":
-    tango_board = np.zeros(TANGO_BOARD_SHAPE)
-    tango_board[0] = TangoBoardStates.Moon.value
+    tango_board = np.load("./queens_test_file/perfect_example.npy")
+    equality_states_vertical = np.load("./queens_test_file/perfect_example_vertical.npy")
+    equality_states_horizontal = np.load("./queens_test_file/perfect_example_horizontal.npy")
 
-    equality_states_vertical = np.zeros(VERTICAL_SHAPE)
-    equality_states_horizontal = np.ones(HORIZONTAL_SHAPE)
     tango_solver = TangoSolver(tango_board, equality_states_vertical, equality_states_horizontal)
     tango_solver._apply_relations(False)
     print(tango_solver._working_tango_board)
