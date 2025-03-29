@@ -72,10 +72,16 @@ class TangoConnector(LinkedinGameConnector):
 
 
     def populate_relations(self, board_elements_soupified: BeautifulSoup):
-        for index, cell in enumerate(board_elements_soupified.find_all(recursive=False)):
+        index = 0
+        for cell in board_elements_soupified.find_all(recursive=False):
             # create categories
             # iterate through all the edges found
             edge_relations = cell.find_all(class_="lotka-cell-edge")
+
+            # check if it is a cell
+            content = cell.find(class_="lotka-cell-content-img")
+            if content is not None and content.name != 'span':
+                continue
 
             for edge_relation in edge_relations:
                 # get the class
@@ -92,6 +98,8 @@ class TangoConnector(LinkedinGameConnector):
                     if edge_relation_type == "Cross" or edge_relation_type == "Equal":
                         relation_table[int(np.floor(index / self.BOARD_SHAPE[1]))][index % self.BOARD_SHAPE[
                             0]] = EqualityStates.Equal.value if edge_relation_type == "Equal" else EqualityStates.NotEqual.value
+
+            index += 1
 
     def populate_clickers(self, board_elements: WebElement):
         for index, cell in enumerate(board_elements.find_elements(By.XPATH, './*')):
@@ -146,4 +154,4 @@ if __name__ == "__main__":
     print(tango_connector)
     print(tango_connector.get_horizontal_relations())
     print(tango_connector.get_vertical_relations())
-    tango_connector.save_boards("perfect_example", "perfect_example_vertical", "perfect_example_horizontal")
+    tango_connector.save_boards("interesting_example", "interesting_example_vertical", "interesting_example_horizontal")
